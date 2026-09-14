@@ -23,6 +23,7 @@ dependencies = [
     "pydantic>=2.6",
     "reportlab>=4.1",
     "uvicorn>=0.29",
+    "websockets>=13",
     "yt-dlp>=2024.8",
 ]
 
