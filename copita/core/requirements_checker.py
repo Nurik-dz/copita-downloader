@@ -171,13 +171,14 @@ REQUIREMENTS: List[Dict[str, Any]] = [
         "description": "Powers magnet link and .torrent downloads.",
         "check": _check_libtorrent,
         # There's no pip wheel for libtorrent on this app's Python version
-        # yet (checked live: PyPI publishes cp39-cp313, nothing for cp314) --
-        # Homebrew's own libtorrent-rasterbar formula already builds real
-        # Python bindings against the exact same Python version (it depends
-        # on python@3.14), so this installs through Homebrew instead of pip
-        # like the other requirements here. See the matching PYTHONPATH
-        # addition in BackendManager.swift that makes the installed module
-        # actually importable by this app's own Python afterward.
+        # yet (checked live: PyPI publishes cp39-cp313, nothing for cp314 or
+        # cp315) -- Homebrew's own libtorrent-rasterbar formula already
+        # builds real Python bindings against its current python@3.X, so this
+        # installs through Homebrew instead of pip like the other
+        # requirements here. See the matching PYTHONPATH addition in
+        # BackendManager.swift that makes the installed module importable by
+        # this app's own Python afterward -- only when both are the same
+        # 3.X, since compiled bindings are tied to one Python version.
         "install_cmd": ["brew", "install", "libtorrent-rasterbar"],
         "requires": "homebrew",
         "required": True,

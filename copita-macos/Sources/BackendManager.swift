@@ -32,8 +32,9 @@ class BackendManager {
         print("[Copita] Launching background Python engine from \(workspacePath)...")
         let p = Process()
         
-        let pythonPath = "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3"
-        let execPath = FileManager.default.fileExists(atPath: pythonPath) ? pythonPath : "/usr/bin/python3"
+        let python = BackendManager.resolvePython()
+        let execPath = python.path
+        print("[Copita] Using Python at \(execPath)")
         
         p.executableURL = URL(fileURLWithPath: execPath)
         p.arguments = ["-m", "uvicorn", "copita.api.server:app", "--host", "127.0.0.1", "--port", "8888"]
@@ -42,7 +43,7 @@ class BackendManager {
         var env = ProcessInfo.processInfo.environment
         let extraPaths = [
             "/opt/homebrew/bin",
-            "/Library/Frameworks/Python.framework/Versions/3.14/bin",
+            (execPath as NSString).deletingLastPathComponent,
             "/usr/local/bin",
             "/usr/bin",
             "/bin"
@@ -69,14 +70,20 @@ class BackendManager {
         // libtorrent has no pip wheel for this app's Python version yet, so
         // it installs through Homebrew's libtorrent-rasterbar formula
         // instead (see requirements_checker.py) -- that puts the compiled
-        // module in Homebrew's own Python 3.14 site-packages, which this
+        // module in Homebrew's own python3.X site-packages, which this
         // app's Python (a separate install at
         // /Library/Frameworks/Python.framework) never sees on its own.
         // This is a fixed, known local path (unlike the removed inherited
         // PYTHONPATH above) so it doesn't carry that same hang risk.
-        let brewSitePackages = "/opt/homebrew/lib/python3.14/site-packages"
-        if FileManager.default.fileExists(atPath: brewSitePackages) {
-            pythonPaths.append(brewSitePackages)
+        // Only the site-packages for the *same* minor version as the
+        // interpreter is added: compiled modules are tied to one Python ABI,
+        // so e.g. 3.14's pydantic_core on a 3.15 interpreter would shadow the
+        // working copy and fail to import.
+        if let version = python.version {
+            let brewSitePackages = "/opt/homebrew/lib/python\(version)/site-packages"
+            if FileManager.default.fileExists(atPath: brewSitePackages) {
+                pythonPaths.append(brewSitePackages)
+            }
         }
         env["PYTHONPATH"] = pythonPaths.joined(separator: ":")
         p.environment = env
@@ -96,6 +103,28 @@ class BackendManager {
         } catch {
             print("[Copita] Failed to launch backend: \(error)")
         }
+    }
+
+    // Newest first. python.org installs (/Library/Frameworks) win over
+    // Homebrew's python@3.X: that's where Settings' pip installs have always
+    // gone, and Homebrew's Python refuses `pip install` (PEP 668).
+    static let supportedPythonVersions = ["3.15", "3.14", "3.13", "3.12", "3.11"]
+
+    static func resolvePython() -> (path: String, version: String?) {
+        let fm = FileManager.default
+        let layouts: [(String) -> String] = [
+            { "/Library/Frameworks/Python.framework/Versions/\($0)/bin/python\($0)" },
+            { "/opt/homebrew/opt/python@\($0)/bin/python\($0)" },
+        ]
+        for layout in layouts {
+            for version in supportedPythonVersions {
+                let path = layout(version)
+                if fm.isExecutableFile(atPath: path) {
+                    return (path, version)
+                }
+            }
+        }
+        return ("/usr/bin/python3", nil)
     }
 
     func stop() {

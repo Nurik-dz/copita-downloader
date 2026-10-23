@@ -15,8 +15,10 @@ websockets>=13
 yt-dlp>=2024.8
 
 # --- Optional ---------------------------------------------------------------
-# Magnet / torrent downloads. Ships as a wheel for most platforms:
+# Magnet / torrent downloads. Ships as a wheel up to Python 3.13:
 #   pip install libtorrent
+# On Python 3.14+ there's no wheel yet; use your OS package instead
+# (macOS: brew install libtorrent-rasterbar).
 #
 # Headless-browser fallback for a handful of JavaScript-heavy pages:
 #   pip install playwright && playwright install chromium

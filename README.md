@@ -102,7 +102,7 @@ media or download link behind it.
 
 | Requirement | Notes |
 |---|---|
-| **Python 3.11+** | 3.12+ recommended |
+| **Python 3.11+** | 3.12+ recommended · tested up to 3.15 |
 | **FFmpeg** | Combines and converts media. Must be on your `PATH`. |
 
 Everything else is a Python package installed in the next step.
@@ -157,7 +157,8 @@ Or download a build from the FFmpeg site and add its `bin` folder to `PATH`.
 ### 3 · Optional extras
 
 ```bash
-# Magnet / torrent support
+# Magnet / torrent support (pip wheels stop at Python 3.13 — on 3.14+
+# use your OS package instead, e.g. `brew install libtorrent-rasterbar`)
 pip install libtorrent
 
 # Headless‑browser fallback for a few JavaScript‑heavy pages
